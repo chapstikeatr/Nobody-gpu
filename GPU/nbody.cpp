@@ -267,10 +267,11 @@ void copy_from_device(simulation &s, const device_simulation &d) {
   cudaMemcpy(s.fy.data(), d.fy, bytes, cudaMemcpyDeviceToHost);
   cudaMemcpy(s.fz.data(), d.fz, bytes, cudaMemcpyDeviceToHost);
 }
+
 int main(int argc, char *argv[]) {
-  if (argc != 5) {
-    std::cerr << "usage: " << argv[0] << " <input> <dt> <nbstep> <printevery>"
-              << "\n"
+  if (argc != 6) {
+    std::cerr << "usage: " << argv[0]
+              << " <input> <dt> <nbstep> <printevery> <blocksize>" << "\n"
               << "input can be:" << "\n"
               << "a number (random initialization)" << "\n"
               << "planet (initialize with solar system)" << "\n"
@@ -281,6 +282,11 @@ int main(int argc, char *argv[]) {
   double dt = std::atof(argv[2]); // in seconds
   size_t nbstep = std::atol(argv[3]);
   size_t printevery = std::atol(argv[4]);
+  int blocksize = std::atoi(argv[5]);
+  if (blocksize <= 0)
+    blocksize = 128;
+  if (printevery == 0)
+    printevery = nbstep + 1;
 
   simulation s(1);
 
@@ -300,23 +306,27 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  device_simulation d;
+  allocate_device(d, s.nbpart);
+  copy_to_device(s, d);
+
+  int gridsize = (s.nbpart + blocksize - 1) / blocksize;
   for (size_t step = 0; step < nbstep; step++) {
-    if (step % printevery == 0)
+    if (step % printevery == 0) {
+      copy_from_device(s, d);
       dump_state(s);
-
-    reset_force(s);
-    for (size_t i = 0; i < s.nbpart; ++i)
-      for (size_t j = 0; j < s.nbpart; ++j)
-        if (i != j)
-          update_force(s, i, j);
-
-    for (size_t i = 0; i < s.nbpart; ++i) {
-      apply_force(s, i, dt);
-      update_position(s, i, dt);
     }
+
+    compute_forces_kernel<<<gridsize, blocksize>>>(s.nbpart, d.mass, d.x, d.y,
+                                                   d.z, d.fx, d.fy, d.fz);
+    cudaGetLastError();
+
+    move_kernel<<<gridsize, blocksize>>>(s.nbpart, dt, d.mass, d.x, d.y, d.z,
+                                         d.vx, d.vy, d.vz, d.fx, d.fy, d.fz);
+    cudaGetLastError();
   }
 
-  // dump_state(s);
-
+  cudaDeviceSynchronize();
+  free_device(d);
   return 0;
 }
