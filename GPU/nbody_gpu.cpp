@@ -6,6 +6,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include <chrono>
 
 double G = 6.674 * std::pow(10, -11);
 // double G = 1;
@@ -214,7 +215,7 @@ void load_from_file(simulation &s, std::string filename) {
 }
 
 void allocate_device(device_simulation &d, size_t nbpart) {
-  size_t bytes = nbpart * sizeof(double;
+  size_t bytes = nbpart * sizeof(double);
   cudaMalloc((void**)&d.mass, bytes);
   cudaMalloc((void**)&d.x, bytes);
   cudaMalloc((void**)&d.y, bytes);
@@ -310,6 +311,8 @@ int main(int argc, char *argv[]) {
   allocate_device(d, s.nbpart);
   copy_to_device(s, d);
 
+  const auto start{std::chrono::steady_clock::now()};
+
   int gridsize = (s.nbpart + blocksize - 1) / blocksize;
   for (size_t step = 0; step < nbstep; step++) {
     if (step % printevery == 0) {
@@ -327,6 +330,10 @@ int main(int argc, char *argv[]) {
   }
 
   cudaDeviceSynchronize();
+  const auto finish{std::chrono::steady_clock::now()};
+  const std::chrono::duration<double> elapsed_seconds{finish - start};
+  std::cerr << "Time: " << elapsed_seconds.count() << "\n"
+            << "Block size: " << argv[5] << "\n";
   free_device(d);
   return 0;
 }

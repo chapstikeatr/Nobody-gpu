@@ -2,6 +2,7 @@
 #include <fstream>
 #include <random>
 #include <cmath>
+#include <chrono>
 
 double G = 6.674*std::pow(10,-11);
 //double G = 1;
@@ -197,37 +198,41 @@ int main(int argc, char* argv[]) {
 
   //parse command line
   {
-    size_t nbpart = std::atol(argv[1]); //return 0 if not a number
-    if ( nbpart > 0) {
+    size_t nbpart = std::atol(argv[1]); // return 0 if not a number
+    if (nbpart > 0) {
       s = simulation(nbpart);
       random_init(s);
     } else {
       std::string inputparam = argv[1];
       if (inputparam == "planet") {
-	init_solar(s);
-      } else{
-	load_from_file(s, inputparam);
+        init_solar(s);
+      } else {
+        load_from_file(s, inputparam);
       }
-    }    
+    }
   }
 
-  
-  for (size_t step = 0; step< nbstep; step++) {
-    if (step %printevery == 0)
+  const auto start{std::chrono::steady_clock::now()};
+  for (size_t step = 0; step < nbstep; step++) {
+    if (step % printevery == 0)
       dump_state(s);
-  
-    reset_force(s);
-    for (size_t i=0; i<s.nbpart; ++i)
-      for (size_t j=0; j<s.nbpart; ++j)
-	if (i != j)
-	  update_force(s, i, j);
 
-    for (size_t i=0; i<s.nbpart; ++i) {
+    reset_force(s);
+    for (size_t i = 0; i < s.nbpart; ++i)
+      for (size_t j = 0; j < s.nbpart; ++j)
+        if (i != j)
+          update_force(s, i, j);
+
+    for (size_t i = 0; i < s.nbpart; ++i) {
       apply_force(s, i, dt);
       update_position(s, i, dt);
     }
   }
-  
+
+  const auto finish{std::chrono::steady_clock::now()};
+  const std::chrono::duration<double> elapsed_seconds{finish - start};
+  std::cerr << "Time to crawl: " << elapsed_seconds.count()
+            << "Number of threads: 1 (seq)" << "s\n";
   //dump_state(s);  
 
 
