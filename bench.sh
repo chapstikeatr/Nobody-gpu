@@ -10,6 +10,12 @@
 ./GPU/nbody_gpu 100000 0.01 50 101 128
 ./GPU/nbody_gpu 10000 0.01 50 101 128
 ./GPU/nbody_gpu 1000 0.01 50 101 128
-./sequential/nbody 100000 0.01 50 101
-./sequential/nbody 10000 0.01 50 101
-./sequential/nbody 1000 0.01 50 101
+./GPU/nbody_gpu 100000 0.01 50 101 256
+./GPU/nbody_gpu 10000 0.01 50 101 256
+./GPU/nbody_gpu 1000 0.01 50 101 256
+./GPU/nbody_gpu 100000 0.01 50 101 64
+./GPU/nbody_gpu 10000 0.01 50 101 64
+./GPU/nbody_gpu 1000 0.01 50 101 64
+#./sequential/nbody 100000 0.01 50 101
+#./sequential/nbody 10000 0.01 50 101
+#./sequential/nbody 1000 0.01 50 101
