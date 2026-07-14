@@ -1,0 +1,12 @@
+CompileFlags:
+  Compiler: /usr/bin/clang++
+  Add:
+    - -std=c++17
+    - -xcuda
+    - --cuda-path=/Users/carterstickle/.local/cuda-lsp
+    - --cuda-gpu-arch=sm_90
+    - -nocudalib
+    - -isysroot
+    - /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+    - -Wno-unknown-cuda-version
+    - -Wno-unused-command-line-argument
